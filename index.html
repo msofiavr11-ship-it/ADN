@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratorio Interactivo del Dogma Central</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: #2c3e50;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 { color: #1e3d59; font-size: 24px; margin-bottom: 5px; }
+        .subtitle { color: #7f8c8d; font-size: 14px; margin-bottom: 20px; }
+        
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            background: #e2e8f0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #334155;
+        }
+
+        .step-box {
+            display: none;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            text-align: left;
+        }
+        .step-box.active { display: block; }
+        h2 { color: #17b978; font-size: 18px; margin-top: 0; }
+        
+        .strand-container {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .base-box {
+            width: 45px;
+            height: 55px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 18px;
+            color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+            cursor: pointer;
+        }
+        .base-label { font-size: 10px; margin-top: 2px; opacity: 0.8; }
+        
+        .bg-A { background-color: #e74c3c; } 
+        .bg-T { background-color: #3498db; } 
+        .bg-C { background-color: #2ecc71; } 
+        .bg-G { background-color: #f1c40f; color: #333 !important; } 
+        .bg-U { background-color: #e67e22; } 
+        .bg-empty { background-color: #cbd5e1; color: #64748b !important; border: 2px dashed #94a3b8; cursor: default; }
+
+        .palette {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .palette-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: none;
+            font-weight: bold;
+            font-size: 18px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+        .palette-btn:hover { transform: scale(1.1); }
+
+        button.action-btn {
+            background-color: #17b978;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.3s;
+            margin-right: 5px;
+        }
+        button.action-btn:hover { background-color: #129461; }
+        
+        .feedback {
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 15px;
+            text-align: center;
+        }
+        .error { color: #e74c3c; }
+        .success { color: #27ae60; }
+        
+        .protein-card {
+            background: #e8f5e9;
+            border: 2px solid #81c784;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        .protein-card h3 { color: #2e7d32; margin-top: 0; }
+        
+        .progress-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            overflow: hidden;
+            height: 10px;
+        }
+        .progress-fill {
+            width: 0%;
+            background: #17b978;
+            transition: width 0.4s ease;
+        }
+        .instruction-note {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 10px;
+        }
+
+        /* Estilo para la tabla de código genético */
+        .genetic-table {
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 10px;
+            margin: 15px auto;
+            max-width: 500px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .genetic-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .genetic-table th, .genetic-table td {
+            border: 1px solid #e2e8f0;
+            padding: 5px;
+        }
+        .genetic-table th {
+            background: #f1f5f9;
+            color: #1e3d59;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Laboratorio Interactivo del Dogma Central</h1>
+    <div class="subtitle">Supera los 5 retos moleculares construyendo ADN, ARN y proteínas reales.</div>
+
+    <div class="stats-bar">
+        <span id="challenge-counter">Reto: 1 de 5</span>
+        <span id="phase-title">Fase: Replicación del ADN</span>
+    </div>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+
+    <!-- PASO 1: REPLICACIÓN -->
+    <div id="step1" class="step-box active">
+        <h2>Paso 1: Replicación (Construye la hebra complementaria de ADN)</h2>
+        <p>Selecciona la base correcta de la paleta. (Recuerda: <strong>A con T</strong>, <strong>C con G</strong>).</p>
+        <div class="instruction-note">💡 Haz clic en una de tus casillas llenas si necesitas borrarla y corregir.</div>
+        
+        <p><strong>Hebra Molde Original:</strong></p>
+        <div id="template-strand-1" class="strand-container"></div>
+        
+        <p><strong>Tu construcción en curso:</strong></p>
+        <div id="user-strand-1" class="strand-container"></div>
+
+        <div class="palette" id="palette-1"></div>
+        <div style="text-align: center;">
+            <button class="action-btn" onclick="checkReplication()">Verificar Replicación</button>
+            <button class="action-btn" style="background-color: #64748b;" onclick="resetCurrentStep(1)">Reiniciar Paso</button>
+        </div>
+        <div id="feedback1" class="feedback"></div>
+    </div>
+
+    <!-- PASO 2: TRANSCRIPCIÓN -->
+    <div id="step2" class="step-box">
+        <h2>Paso 2: Transcripción (Sintetiza el ARNm)</h2>
+        <p>A partir del ADN molde, construye el ARN mensajero usando las 5 bases. ¡Analiza cuál corresponde!</p>
+        <div class="instruction-note">💡 Haz clic en una casilla para corregir si es necesario.</div>
+        
+        <p><strong>Hebra Molde de ADN:</strong></p>
+        <div id="template-strand-2" class="strand-container"></div>
+
+        <p><strong>Tu ARNm en curso:</strong></p>
+        <div id="user-strand-2" class="strand-container"></div>
+
+        <div class="palette" id="palette-2"></div>
+        <div style="text-align: center;">
+            <button class="action-btn" onclick="checkTranscription()">Verificar Transcripción</button>
+            <button class="action-btn" style="background-color: #64748b;" onclick="resetCurrentStep(2)">Reiniciar Paso</button>
+        </div>
+        <div id="feedback2" class="feedback"></div>
+    </div>
+
+    <!-- PASO 3: TRADUCCIÓN -->
+    <div id="step3" class="step-box">
+        <h2>Paso 3: Traducción (Selecciona los Aminoácidos en orden)</h2>
+        <p>Lee los codones de 3 en 3 del ARNm y consulta la tabla de abajo para armar la proteína.</p>
+        <p><strong>ARNm a traducir:</strong> <span id="mrna-text" style="font-family: monospace; font-size: 20px; font-weight: bold; color: #1e3d59;"></span></p>
+        
+        <!-- TABLA DE CÓDIGO GENÉTICO INTEGRADA -->
+        <div class="genetic-table">
+            <strong>📖 Tabla de Código Genético de Referencia</strong>
+            <table>
+                <tr><th>Codón (ARNm)</th><th>Aminoácido</th><th>Codón (ARNm)</th><th>Aminoácido</th></tr>
+                <tr><td>AUG</td><td>Metionina (Met)</td><td>AAC / AAU</td><td>Asparagina (Asn)</td></tr>
+                <tr><td>CCG / CCA</td><td>Prolina (Pro)</td><td>GAU / GAC</td><td>Ác. Aspártico (Asp)</td></tr>
+                <tr><td>GGC / GGA</td><td>Glicina (Gly)</td><td>UGU / UGC</td><td>Cisteína (Cys)</td></tr>
+                <tr><td>AAA / AAG</td><td>Lisina (Lys)</td><td>AUU / AUC</td><td>Isoleucina (Ile)</td></tr>
+                <tr><td>UGG</td><td>Triptófano (Trp)</td><td>UUG / UUA</td><td>Leucina (Leu)</td></tr>
+                <tr><td>UUU / UUC</td><td>Fenilalanina (Phe)</td><td>GCC / GCG</td><td>Alanina (Ala)</td></tr>
+            </table>
+        </div>
+
+        <p><strong>Secuencia de aminoácidos actual:</strong></p>
+        <div id="amino-display" style="font-size: 18px; font-weight: bold; color: #2563eb; margin: 15px 0; min-height: 30px; background: #fff; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1;">[ Vacío ]</div>
+
+        <div class="palette" id="amino-palette" style="flex-wrap: wrap; gap: 10px;"></div>
+        <div style="text-align: center;">
+            <button class="action-btn" onclick="checkTranslation()">Verificar Traducción</button>
+            <button class="action-btn" style="background-color: #64748b;" onclick="resetTranslation()">Reiniciar Traducción</button>
+        </div>
+        <div id="feedback3" class="feedback"></div>
+    </div>
+
+    <!-- PASO 4: RESULTADO Y PROTEÍNA FINAL -->
+    <div id="step4" class="step-box">
+        <h2 id="success-header">¡Reto Superado con Éxito!</h2>
+        <div class="protein-card">
+            <h3 id="protein-name">Nombre de la Proteína</h3>
+            <p><strong>Secuencia de Aminoácidos:</strong> <span id="final-sequence"></span></p>
+            <p><strong>Función Biológica en el Cuerpo:</strong></p>
+            <p id="protein-desc"></p>
+        </div>
+        <div style="text-align: center; margin-top: 20px;">
+            <button class="action-btn" id="next-challenge-btn" onclick="nextChallenge()">Avanzar al Siguiente Reto ➔</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (audioCtx.state === 'suspended') { audioCtx.resume(); }
+        let osc = audioCtx.createOscillator();
+        let gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        let now = audioCtx.currentTime;
+        if (type === 'success') {
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        } else if (type === 'victory') {
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.setValueAtTime(659.25, now + 0.15);
+            osc.frequency.setValueAtTime(783.99, now + 0.3);
+            osc.frequency.setValueAtTime(1046.50, now + 0.45);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+            osc.start(now);
+            osc.stop(now + 0.8);
+        } else if (type === 'error') {
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.setValueAtTime(100, now + 0.1);
+            gain.gain.setValueAtTime(0.1, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+            osc.start(now);
+            osc.stop(now + 0.3);
+        }
+    }
+
+    const challenges = [
+        {
+            dna: "TACGGCTTACTA",
+            proteinName: "Histona Reguladora del Citoesqueleto",
+            proteinDesc: "Participa directamente en la compactación del ADN y la estabilización de microtúbulos durante la división celular (mitosis y meiosis).",
+            aminoList: ["Met", "Pro", "Asn", "Asp"]
+        },
+        {
+            dna: "ATGCCGGATACA",
+            proteinName: "Insulina Humana",
+            proteinDesc: "Hormona proteica producida por el páncreas que permite que las células absorban la glucosa de la sangre para generar energía.",
+            aminoList: ["Met", "Gly", "Pro", "Cys"]
+        },
+        {
+            dna: "TACCCGTTTATC",
+            proteinName: "Actina Muscular",
+            proteinDesc: "Proteína estructural fundamental que forma los microfilamentos, permitiendo la contracción muscular y el movimiento celular.",
+            aminoList: ["Met", "Gly", "Lys", "Ile"]
+        },
+        {
+            dna: "TACGGAACCTAG",
+            proteinName: "Hemoglobina Subunidad Beta",
+            proteinDesc: "Proteína globular rica en hierro encargada de transportar el oxígeno desde los pulmones hacia todos los tejidos del cuerpo.",
+            aminoList: ["Met", "Cys", "Trp", "Leu"]
+        },
+        {
+            dna: "TACAAAACCCTT",
+            proteinName: "Queratina Epitelial",
+            proteinDesc: "Proteína fibrosa muy resistente que forma la capa externa de la piel, el cabello y las uñas, protegiendo los tejidos internos.",
+            aminoList: ["Met", "Phe", "Trp", "Gly"]
+        }
+    ];
+
+    let currentChallengeIndex = 0;
+    let userStrands = { 1: [], 2: [] };
+    let userAminoAcids = [];
+
+    function initChallenge() {
+        let ch = challenges[currentChallengeIndex];
+        document.getElementById('challenge-counter').innerText = `Reto: ${currentChallengeIndex + 1} de 5`;
+        document.getElementById('progress').style.width = ((currentChallengeIndex) / 5) * 100 + '%';
+        
+        userStrands[1] = new Array(ch.dna.length).fill(null);
+        renderTemplateStrand('template-strand-1', ch.dna);
+        renderEditableStrand(1, ch.dna.length);
+        renderUniversalPalette(1);
+        document.getElementById('feedback1').innerText = '';
+
+        userStrands[2] = new Array(ch.dna.length).fill(null);
+        renderTemplateStrand('template-strand-2', ch.dna);
+        renderEditableStrand(2, ch.dna.length);
+        renderUniversalPalette(2);
+        document.getElementById('feedback2').innerText = '';
+
+        userAminoAcids = [];
+        let mrna = getCorrectMRNA(ch.dna);
+        document.getElementById('mrna-text').innerText = mrna.match(/.{1,3}/g).join(' ');
+        renderAminoPalette();
+        updateAminoDisplay();
+        document.getElementById('feedback3').innerText = '';
+
+        showStep(1);
+    }
+
+    function getCorrectMRNA(dna) {
+        let map = { 'A': 'U', 'T': 'A', 'C': 'G', 'G': 'C' };
+        let mrna = "";
+        for(let char of dna) {
+            mrna += map[char] || char;
+        }
+        return mrna;
+    }
+
+    function getCorrectDNAComp(dna) {
+        let map = { 'A': 'T', 'T': 'A', 'C': 'G', 'G': 'C' };
+        let comp = "";
+        for(let char of dna) {
+            comp += map[char] || char;
+        }
+        return comp;
+    }
+
+    function renderTemplateStrand(elementId, strandStr) {
+        let container = document.getElementById(elementId);
+        container.innerHTML = '';
+        for (let char of strandStr) {
+            let box = document.createElement('div');
+            box.className = `base-box bg-${char}`;
+            box.innerHTML = `${char}<span class="base-label">ADN</span>`;
+            container.appendChild(box);
+        }
+    }
+
+    function renderEditableStrand(step, length) {
+        let container = document.getElementById(`user-strand-${step}`);
+        container.innerHTML = '';
+        for (let i = 0; i < length; i++) {
+            let box = document.createElement('div');
+            box.id = `step-${step}-box-${i}`;
+            box.className = `base-box bg-empty`;
+            box.innerHTML = `-<span class="base-label">Vacío</span>`;
+            box.onclick = () => clearBox(step, i);
+            container.appendChild(box);
+        }
+    }
+
+    function renderUniversalPalette(step) {
+        let palette = document.getElementById(`palette-${step}`);
+        palette.innerHTML = '';
+        let bases = ['A', 'T', 'C', 'G', 'U'];
+        bases.forEach(base => {
+            let btn = document.createElement('button');
+            btn.className = `palette-btn bg-${base}`;
+            btn.innerText = base;
+            btn.onclick = () => addBaseToNextEmpty(step, base);
+            palette.appendChild(btn);
+        });
+    }
+
+    function addBaseToNextEmpty(step, base) {
+        let strand = userStrands[step];
+        let emptyIdx = strand.indexOf(null);
+        if (emptyIdx !== -1) {
+            strand[emptyIdx] = base;
+            let box = document.getElementById(`step-${step}-box-${emptyIdx}`);
+            box.className = `base-box bg-${base}`;
+            box.innerHTML = `${base}<span class="base-label">Tu base</span>`;
+        }
+    }
+
+    function clearBox(step, index) {
+        userStrands[step][index] = null;
+        let box = document.getElementById(`step-${step}-box-${index}`);
+        box.className = `base-box bg-empty`;
+        box.innerHTML = `-<span class="base-label">Vacío</span>`;
+    }
+
+    function resetCurrentStep(step) {
+        let ch = challenges[currentChallengeIndex];
+        userStrands[step] = new Array(ch.dna.length).fill(null);
+        renderEditableStrand(step, ch.dna.length);
+        document.getElementById(`feedback${step}`).innerText = '';
+    }
+
+    function checkReplication() {
+        let ch = challenges[currentChallengeIndex];
+        let correctComp = getCorrectDNAComp(ch.dna);
+        let userStrandStr = userStrands[1].join('');
+        let fb = document.getElementById('feedback1');
+
+        if(userStrands[1].includes(null)) {
+            playSound('error');
+            fb.innerHTML = "Aún hay casillas vacías. Completa toda la cadena.";
+            fb.className = "feedback error";
+            return;
+        }
+
+        if(userStrandStr === correctComp) {
+            playSound('success');
+            fb.innerHTML = "¡Excelente! Replicación perfecta.";
+            fb.className = "feedback success";
+            setTimeout(() => { showStep(2); }, 1000);
+        } else {
+            playSound('error');
+            fb.innerHTML = "Revisa las parejas en ADN: A-T y C-G. Inténtalo de nuevo.";
+            fb.className = "feedback error";
+        }
+    }
+
+    function checkTranscription() {
+        let ch = challenges[currentChallengeIndex];
+        let correctMrna = getCorrectMRNA(ch.dna);
+        let userStrandStr = userStrands[2].join('');
+        let fb = document.getElementById('feedback2');
+
+        if(userStrands[2].includes(null)) {
+            playSound('error');
+            fb.innerHTML = "Aún hay casillas vacías. Completa toda la cadena.";
+            fb.className = "feedback error";
+            return;
+        }
+
+        if(userStrandStr === correctMrna) {
+            playSound('success');
+            fb.innerHTML = "¡Muy bien! Transcripción de ARN correcta.";
+            fb.className = "feedback success";
+            setTimeout(() => { showStep(3); }, 1000);
+        } else {
+            playSound('error');
+            fb.innerHTML = "Recuerda que en el ARN la Timina (T) se cambia por Uracilo (U).";
+            fb.className = "feedback error";
+        }
+    }
+
+    function renderAminoPalette() {
+        let palette = document.getElementById('amino-palette');
+        palette.innerHTML = '';
+        let options = ["Met", "Pro", "Asn", "Asp", "Gly", "Cys", "Lys", "Ile", "Trp", "Leu", "Phe", "Ala"];
+        options.forEach(amino => {
+            let btn = document.createElement('button');
+            btn.className = 'action-btn';
+            btn.style.margin = '5px';
+            btn.style.backgroundColor = '#3b82f6';
+            btn.innerText = amino;
+            btn.onclick = () => addAmino(amino);
+            palette.appendChild(btn);
+        });
+    }
+
+    function addAmino(amino) {
+        if(userAminoAcids.length < 4) {
+            userAminoAcids.push(amino);
+            updateAminoDisplay();
+        }
+    }
+
+    function updateAminoDisplay() {
+        let display = document.getElementById('amino-display');
+        if(userAminoAcids.length === 0) {
+            display.innerText = "[ Vacío - Selecciona abajo en orden ]";
+        } else {
+            display.innerText = userAminoAcids.join(" - ");
+        }
+    }
+
+    function resetTranslation() {
+        userAminoAcids = [];
+        updateAminoDisplay();
+        document.getElementById('feedback3').innerText = '';
+    }
+
+    function checkTranslation() {
+        let ch = challenges[currentChallengeIndex];
+        let userSeq = userAminoAcids.join("-");
+        let targetSeq = ch.aminoList.join("-");
+        let fb = document.getElementById('feedback3');
+
+        if(userAminoAcids.length < 4) {
+            playSound('error');
+            fb.innerHTML = "Debes seleccionar los 4 aminoácidos de la secuencia.";
+            fb.className = "feedback error";
+            return;
+        }
+
+        if(userSeq === targetSeq) {
+            playSound('success');
+            fb.innerHTML = "¡Traducción perfecta!";
+            fb.className = "feedback success";
+            setTimeout(() => {
+                loadResultCard();
+                showStep(4);
+            }, 1000);
+        } else {
+            playSound('error');
+            fb.innerHTML = "El orden o los aminoácidos no coinciden con los codones de la tabla.";
+            fb.className = "feedback error";
+        }
+    }
+
+    function loadResultCard() {
+        let ch = challenges[currentChallengeIndex];
+        document.getElementById('protein-name').innerText = `Proteína: ${ch.proteinName}`;
+        document.getElementById('final-sequence').innerText = ch.aminoList.join(" - ");
+        document.getElementById('protein-desc').innerText = ch.proteinDesc;
+
+        if(currentChallengeIndex === 4) {
+            playSound('victory');
+            document.getElementById('success-header').innerText = "¡IMPARABLE! ¡Completaste los 5 Retos con Éxito!";
+            document.getElementById('next-challenge-btn').innerText = "Reiniciar Todos los Retos ⟳";
+        } else {
+            playSound('victory');
+            document.getElementById('success-header').innerText = "¡Reto Superado con Éxito!";
+            document.getElementById('next-challenge-btn').innerText = "Avanzar al Siguiente Reto ➔";
+        }
+    }
+
+    function nextChallenge() {
+        currentChallengeIndex++;
+        if(currentChallengeIndex >= challenges.length) {
+            currentChallengeIndex = 0; 
+        }
+        initChallenge();
+    }
+
+    function showStep(stepNum) {
+        document.querySelectorAll('.step-box').forEach(el => el.classList.remove('active'));
+        document.getElementById(`step${stepNum}`).classList.add('active');
+        
+        let titles = [
+            "Fase: Replicación del ADN",
+            "Fase: Transcripción a ARNm",
+            "Fase: Traducción en el Ribosoma",
+            "¡Proteína Sintetizada!"
+        ];
+        document.getElementById('phase-title').innerText = titles[stepNum - 1];
+        document.getElementById('progress').style.width = ((currentChallengeIndex * 4 + stepNum) / 20) * 100 + '%';
+    }
+
+    window.onload = function() {
+        initChallenge();
+    };
+</script>
+
+</body>
+</html>
